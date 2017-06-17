@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<Robot type="FirstInspires-FTC">
+    <DeviceInterfaceModule name="dim" serialNumber="AI041S26">
+        <I2cDevice name="navx" port="0" />
+        <OpticalDistanceSensor name="ods" port="0" />
+    </DeviceInterfaceModule>
+    <MotorController name="Motor Controller 3" serialNumber="A7008L4K">
+        <Motor name="front_left" port="1" />
+        <Motor name="front_right" port="2" />
+    </MotorController>
+    <MotorController name="Motor Controller 2" serialNumber="AI049QDA">
+        <Motor name="back_left" port="1" />
+        <Motor name="back_right" port="2" />
+    </MotorController>
+</Robot>

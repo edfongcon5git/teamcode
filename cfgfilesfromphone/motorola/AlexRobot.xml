@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<Robot type="FirstInspires-FTC">
+    <DeviceInterfaceModule name="dim" serialNumber="AL00XKTK">
+        <I2cDevice name="NavX" port="0" />
+    </DeviceInterfaceModule>
+    <MotorController name="Back Motor Controller" serialNumber="A104OQO9">
+        <Motor name="back_left" port="1" />
+        <Motor name="back_right" port="2" />
+    </MotorController>
+    <MotorController name="Front Motor Controller" serialNumber="A104OQW3">
+        <Motor name="front_left" port="1" />
+        <Motor name="front_right" port="2" />
+    </MotorController>
+</Robot>

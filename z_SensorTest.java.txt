@@ -1,0 +1,274 @@
+/* Copyright (c) 2014, 2015 Qualcomm Technologies Inc
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted (subject to the limitations in the disclaimer below) provided that
+the following conditions are met:
+
+Redistributions of source code must retain the above copyright notice, this list
+of conditions and the following disclaimer.
+
+Redistributions in binary form must reproduce the above copyright notice, this
+list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+Neither the name of Qualcomm Technologies Inc nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS
+LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
+package org.firstinspires.ftc.teamcode;
+
+import com.kauailabs.navx.ftc.AHRS;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.AnalogInput;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.LightSensor;
+import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
+
+import java.text.DecimalFormat;
+
+// This is used to test out the x,y,z of the NAVX
+//    NXT light sensor, VEX light sensors
+//    ODS sensor, NAVX output values
+@TeleOp(name="Sensor Test", group="Navx")
+//@Disabled  // 12/2/2016
+public class SensorTest extends OpMode {
+    //navx
+    private final int NAVX_DIM_I2C_PORT = 0;
+    private String startDate;
+    private ElapsedTime runtime = new ElapsedTime();
+    private AHRS navx_device;
+
+    float reset_value = 0;
+
+    //motors
+    DcMotor front_left, front_right;
+    DcMotor back_left, back_right;
+    float turn_x, turn_y, turn_z;
+
+    double position;
+
+    //distance/light sensors
+    OpticalDistanceSensor distanceSensor;
+    //LightSensor lightSensor;
+    //AnalogInput lightSensor;
+    Servo servo;
+
+    boolean jerk = false;
+
+    //LEGO light sensors
+    LightSensor lightSensorL, lightSensorR;
+
+    //VEX light sensors
+    AnalogInput lineSensorL, lineSensorR;
+
+    //touch sensor
+    TouchSensor wallSensor;
+
+  @Override
+  public void init() {
+      navx_device = AHRS.getInstance(hardwareMap.deviceInterfaceModule.get("dim"),
+              NAVX_DIM_I2C_PORT,
+              AHRS.DeviceDataType.kProcessedData);
+
+      front_left = hardwareMap.dcMotor.get("front_left");
+      front_right = hardwareMap.dcMotor.get("front_right");
+
+      back_left = hardwareMap.dcMotor.get("back_left");
+      back_right = hardwareMap.dcMotor.get("back_right");
+
+      front_left.setDirection(DcMotor.Direction.REVERSE);
+      back_left.setDirection(DcMotor.Direction.REVERSE);
+
+      //encoders
+      back_left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+      back_right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+      back_left.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+      back_right.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+      //sensors
+      distanceSensor = hardwareMap.opticalDistanceSensor.get("distance");
+
+      //LEGO sensors
+      lightSensorL = hardwareMap.lightSensor.get("lightL");
+      lightSensorR = hardwareMap.lightSensor.get("lightR");
+
+      //VEX sensors
+      lineSensorL = hardwareMap.analogInput.get("lineL");
+      lineSensorR = hardwareMap.analogInput.get("lineR");
+
+      //servo
+      servo = hardwareMap.servo.get("servo");
+
+      //touch sensor
+      wallSensor =  hardwareMap.touchSensor.get("touch");
+  }
+
+  @Override
+  public void stop() {
+    //navx_device.close();
+
+      float turn_x = 0;
+      float turn_y = 0;
+      float turn_z = 0;
+
+      back_right.setPower(0);
+      front_right.setPower(0);
+
+      back_left.setPower(0);
+      front_left.setPower(0);
+  }
+  /*
+     * Code to run when the op mode is first enabled goes here
+     * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#start()
+     */
+  @Override
+  public void init_loop() {
+    //telemetry.addData("navX Op Init Loop", runtime.toString());
+  }
+
+  /*
+   * This method will be called repeatedly in a loop
+   * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#loop()
+   */
+  @Override
+  public void loop() {
+      //navx
+      boolean connected = navx_device.isConnected();
+      telemetry.addData("1 navX-Device", connected ? "Connected" : "Disconnected" );
+      String yaw;
+
+      if ( connected ) {
+          DecimalFormat df = new DecimalFormat("#.##");
+          yaw = df.format(navx_device.getYaw() - reset_value);
+      }else{
+          yaw = "";
+      }
+
+      if (gamepad1.y) {
+          reset_value = navx_device.getYaw();
+      }
+
+
+      //original motor code
+      turn_x = gamepad1.left_stick_x;
+      turn_y = gamepad1.left_stick_y;
+      turn_z = -gamepad1.right_stick_x;
+
+      turn_x = Range.clip(turn_x, -1, 1);
+      turn_y = Range.clip(turn_y, -1, 1);
+      turn_z = Range.clip(turn_z, -1, 1);
+
+      turn_x = (float) scaleInput(turn_x);
+      turn_y = (float) scaleInput(turn_y);
+      turn_z = (float) scaleInput(turn_z);
+
+      front_right.setPower(turn_y + turn_x - turn_z);
+      front_left.setPower(turn_y - turn_x + turn_z);
+      back_right.setPower(turn_y - turn_x - turn_z);
+      back_left.setPower(turn_y + turn_x + turn_z);
+
+      telemetry.addData("Text", "*** Robot Data***");
+      telemetry.addData("x", String.format("%.2f", turn_x));
+      telemetry.addData("y", String.format("%.2f", turn_y));
+      telemetry.addData("z", String.format("%.2f", turn_z));
+      telemetry.addData("yaw", navx_device.getYaw() - reset_value);
+      telemetry.addData("reset value", reset_value);
+      telemetry.addData("light", distanceSensor.getLightDetected());
+      telemetry.addData("acceleration x", navx_device.getWorldLinearAccelX());
+      telemetry.addData("acceleration y", navx_device.getWorldLinearAccelY());
+
+      telemetry.addData("lightL", lightSensorL.getLightDetected());
+      telemetry.addData("lightR", lightSensorR.getLightDetected());
+      telemetry.addData("light difference", Math.abs(lightSensorR.getLightDetected() - lightSensorL.getLightDetected()));
+      telemetry.addData("light VEX L", lineSensorL.getVoltage());
+      telemetry.addData("light VEX R", lineSensorR.getVoltage());
+
+      telemetry.addData("left_trigger", gamepad1.left_trigger);
+      telemetry.addData("right_trigger", gamepad1.right_trigger);
+
+      if(gamepad1.a) {
+          position = 0.1;
+          runtime.reset();
+          servo.setPosition(position);
+      }else if(gamepad1.b) {
+          position = 0.8;
+          runtime.reset();
+          servo.setPosition(position);
+      }else{
+          if(runtime.milliseconds()>200){
+          position = 0.45;
+          servo.setPosition(position);
+      }
+      }
+
+
+      telemetry.addData("servo position", position);
+
+      double last_world_linear_accel_y = 0;
+      double currentJerkY = 0;
+      double curr_world_linear_accel_y;
+      curr_world_linear_accel_y = navx_device.getWorldLinearAccelY();
+      currentJerkY = curr_world_linear_accel_y - last_world_linear_accel_y;
+      last_world_linear_accel_y = curr_world_linear_accel_y;
+
+      if (currentJerkY > 0.5) {
+          jerk = true;
+      }
+      if(gamepad1.x) {
+          jerk = false;
+      }
+
+      telemetry.addData("jerk_y", currentJerkY);
+      telemetry.addData("jerk", jerk);
+
+  }
+      double scaleInput(double dVal)  {
+          double[] scaleArray = { 0.0, 0.0, 0.0, 0.05, 0.09, 0.10, 0.12, 0.15, 0.18, 0.24,
+                  0.30, 0.36, 0.43, 0.50, 0.60, 0.72, 0.85, 1.00, 1.00 };
+
+          // get the corresponding index for the scaleInput array.
+          int index = (int) (dVal * 18.0);
+
+          // index should be positive.
+          if (index < 0) {
+              index = -index;
+          }
+
+          // index cannot exceed size of array minus 1.
+          if (index > 18) {
+              index = 18;
+          }
+
+          // get value from the array.
+          double dScale = 0.0;
+           if (dVal < 0) {
+              dScale = -scaleArray[index];
+          } else {
+             dScale = scaleArray[index];
+          }
+
+          // return scaled value.
+          return dScale;
+      }
+}
