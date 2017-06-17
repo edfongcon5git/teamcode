@@ -63,6 +63,7 @@ import java.text.DecimalFormat;
 // This was added to read the NXT several times and add the color
 //    values because the wrong color was pushed in the Regionals
 //    in Tacoma, Washington.  This uses the older NXT light sensor.
+//    Test the github files in the teamcode folder for version control.
 @Autonomous(name = "AutoNomous 01 No Ball (To Ramp) BEACON SUM", group = "Autonomous")
 //@Disabled //Comment this in to remove this from the Driver Station OpMode List
 public class AutonNoBallExtraButtonSUM extends LinearOpMode {
